@@ -60,8 +60,22 @@ jobs:
         env:
           STORAGE_CREDENTIALS: ${{ secrets.STORAGE_CREDENTIALS }}
         run: |
-          python -c "import os; data=os.environ['STORAGE_CREDENTIALS']; open('sa-key.json', 'w').write(data); open('/tmp/sa-key.json', 'w').write(data)"
-          echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/sa-key.json" >> $GITHUB_ENV
+          python - <<'PYEOF'
+          import os, json
+          data = os.environ.get('STORAGE_CREDENTIALS', '').strip()
+          print(f"Credential length: {len(data)}")
+          if not data:
+              raise SystemExit("ERROR: STORAGE_CREDENTIALS secret is empty!")
+          key = json.loads(data)
+          print("Project ID:", key.get("project_id"))
+          print("Client Email:", key.get("client_email"))
+          with open("sa-key.json", "w") as f:
+              f.write(data)
+          with open("/tmp/sa-key.json", "w") as f:
+              f.write(data)
+          PYEOF
+          dvc remote modify labstore credentialpath "$PWD/sa-key.json" --local
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$PWD/sa-key.json" >> $GITHUB_ENV
 
       - name: Pull data with DVC
         run: dvc pull data/train_batch1.csv.dvc data/holdout.csv.dvc

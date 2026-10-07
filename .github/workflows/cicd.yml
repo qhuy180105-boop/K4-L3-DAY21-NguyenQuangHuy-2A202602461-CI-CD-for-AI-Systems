@@ -60,8 +60,8 @@ jobs:
         env:
           STORAGE_CREDENTIALS: ${{ secrets.STORAGE_CREDENTIALS }}
         run: |
-          python -c "import os; data = os.environ.get('STORAGE_CREDENTIALS', ''); open('sa-key.json', 'w').write(data); open('/tmp/sa-key.json', 'w').write(data)"
-          echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa-key.json" >> $GITHUB_ENV
+          python -c "import os; data=os.environ['STORAGE_CREDENTIALS']; open('sa-key.json', 'w').write(data); open('/tmp/sa-key.json', 'w').write(data)"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/sa-key.json" >> $GITHUB_ENV
 
       - name: Pull data with DVC
         run: dvc pull data/train_batch1.csv.dvc data/holdout.csv.dvc

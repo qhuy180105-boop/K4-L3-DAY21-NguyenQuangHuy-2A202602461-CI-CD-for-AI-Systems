@@ -1,103 +1,50 @@
 # Báo Cáo Lab Day 21 - CI/CD cho AI Systems
 
-<!--
-HƯỚNG DẪN - đọc rồi XÓA TOÀN BỘ các khối chú thích này sau khi điền xong:
-
-  - Giới hạn: KHÔNG QUÁ 1 TRANG A4, tương đương khoảng 450 - 550 từ nội dung.
-  - Chỉ điền vào các chỗ ___ và các ô trong bảng. Không thêm mục mới.
-  - Viết bằng câu hoàn chỉnh, không gạch đầu dòng cụt lủn.
-  - Kiểm tra độ dài sau khi đã xóa hết chú thích:
-        wc -w nop-bai/bao-cao.md
-    và xem trước bản in bằng cách mở file trên GitHub rồi Ctrl+P / Cmd+P.
--->
-
 | | |
 |---|---|
-| Họ và tên | ___ |
-| MSSV | ___ |
+| Họ và tên | Nguyễn Quang Huy |
+| MSSV | 2A202602461 |
 | Lớp / Khóa | K4 |
-| Repo GitHub | https://github.com/___/___ |
-| Ngày nộp | ___ |
+| Repo GitHub | https://github.com/qhuy180105-boop/K4-L3-DAY21-NguyenQuangHuy-2A202602461-CI-CD-for-AI-Systems |
+| Ngày nộp | 07/10/2026 |
 
 ---
 
 ## 1. Bộ Siêu Tham Số Đã Chọn và Lý Do
 
-<!-- Khoảng 120 - 150 từ. Điền kết quả thật từ MLflow UI ở Bước 1, tối thiểu 3 lần chạy. -->
-
 | Lần chạy | n_estimators | learning_rate | max_depth | f1_score | accuracy |
 |---|---|---|---|---|---|
-| 1 | ___ | ___ | ___ | ___ | ___ |
-| 2 | ___ | ___ | ___ | ___ | ___ |
-| 3 | ___ | ___ | ___ | ___ | ___ |
+| 1 | 100 | 0.1 | 3 | 0.7109 | 0.8780 |
+| 2 | 50 | 0.05 | 2 | 0.6051 | 0.8460 |
+| 3 | 200 | 0.1 | 5 | 0.7149 | 0.8740 |
 
-**Bộ siêu tham số đã chọn:** `n_estimators=___`, `learning_rate=___`, `max_depth=___`.
+**Bộ siêu tham số đã chọn:** `n_estimators=200`, `learning_rate=0.1`, `max_depth=5`.
 
-**Lý do:** ___
-
-<!--
-Trả lời trong phần Lý do:
-  - Vì sao bộ này tốt hơn các bộ còn lại (dựa trên f1_score, không phải accuracy)?
-  - Lần chạy có accuracy cao nhất có trùng với lần có f1_score cao nhất không?
-    Nếu không, điều đó nói lên điều gì?
-  - Bạn quan sát thấy đánh đổi nào giữa n_estimators và learning_rate?
--->
+**Lý do:** Lần 3 đạt điểm f1_score cao nhất (0.7149), đạt ngưỡng chất lượng f1_score >= 0.65 của pipeline. Lần 1 có accuracy cao hơn (0.8780) nhưng f1_score lại thấp hơn (0.7109 so với 0.7149), cho thấy accuracy có thể gây hiểu nhầm trên dữ liệu mất cân bằng. Có sự đánh đổi giữa n_estimators và learning_rate: khi giảm learning_rate=0.05, n_estimators=50 và max_depth=2 ở Lần 2, mô hình bị underfitting (f1=0.6051). Tăng n_estimators lên 200 và max_depth lên 5 giúp mô hình Gradient Boosting biểu diễn tốt hơn các đặc trưng phức tạp.
 
 ---
 
 ## 2. Vì Sao Ngưỡng Chất Lượng Đặt Trên F1 Chứ Không Phải Accuracy
 
-<!-- Khoảng 120 - 150 từ. -->
-
-___
-
-<!--
-Cần nêu được:
-  - Phân bố lớp của tập dữ liệu (tỷ lệ lớp thu nhập > 50K) và hệ quả của nó.
-  - Accuracy của một mô hình luôn trả lời "thu nhập thấp" là bao nhiêu, vì sao con số
-    đó gây hiểu nhầm.
-  - F1 của lớp dương đo điều gì mà accuracy không đo được.
-  - Vì sao KHÔNG dùng average="weighted" hay average="macro" khi gọi f1_score.
--->
+Tập dữ liệu Adult Census Income có phân bố lớp mất cân bằng nghiêm trọng với chỉ 24.8% số mẫu thuộc lớp thu nhập cao (>50K). Một mô hình vô dụng luôn đoán "thu nhập thấp" cho mọi mẫu vẫn đạt accuracy 75.2% mặc dù không phát hiện được bất kỳ người thu nhập cao nào. Do đó, accuracy không phản ánh năng lực thực tế. F1-score của lớp dương (target = 1) đánh giá chính xác sự cân bằng giữa Precision và Recall riêng cho lớp thiểu số. Khi tính f1_score, ta không dùng `average="weighted"` hay `average="macro"` vì các cách tính này bị lớp đa số (75.2%) kéo điểm số lên cao, che lấp hiệu năng thực sự trên lớp thiểu số.
 
 ---
 
 ## 3. Khó Khăn Gặp Phải và Cách Giải Quyết
 
-<!-- Nêu 2 - 3 khó khăn thật, mỗi ô một câu ngắn. -->
-
 | Khó khăn | Nguyên nhân | Cách giải quyết |
 |---|---|---|
-| ___ | ___ | ___ |
-| ___ | ___ | ___ |
-| ___ | ___ | ___ |
+| Lỗi dvc push/pull authentication | Sa-key.json chưa cấu hình trong remote credentialpath của DVC. | Chạy `dvc remote modify labstore credentialpath sa-key.json` và lưu JSON vào secret STORAGE_CREDENTIALS. |
+| SSH connection denied khi deploy | SSH key chưa thêm vào authorized_keys hoặc format key bị sai. | Tạo key Ed25519, thêm public key vào authorized_keys trên VM và lưu private key vào SERVER_SSH_KEY. |
+| Service FastAPI trên VM bị hỏng khi start | Server khởi động trước khi model.joblib được upload lên Cloud Storage. | Đảm bảo job Train upload thành công model.joblib lên Cloud Storage trước khi job Release restart service. |
 
 ---
 
-## 4. So Sánh Bước 2 và Bước 3 (bắt buộc, 2 - 3 câu)
-
-<!-- Lấy số liệu từ bảng ở mục 3.6 của tasks/buoc-3.md. -->
+## 4. So Sánh Bước 2 và Bước 3
 
 | | f1_score | accuracy |
 |---|---|---|
-| Bước 2 (chỉ `train_batch1`) | ___ | ___ |
-| Bước 3 (thêm `train_batch2`) | ___ | ___ |
+| Bước 2 (chỉ `train_batch1`) | 0.7149 | 0.8740 |
+| Bước 3 (thêm `train_batch2`) | 0.7354 | 0.8820 |
 
-**Nhận xét:** ___
-
-<!--
-Một câu trả lời trung thực kiểu "f1 giảm 0,01 vì dữ liệu mới cùng phân phối, không mang
-thêm thông tin mới" được đánh giá cao hơn kết luận sai rằng thêm dữ liệu luôn tốt hơn.
--->
-
----
-
-## 5. Phần Bonus Đã Thực Hiện (nếu có)
-
-<!-- Xóa cả mục 5 nếu không làm bonus. Mỗi bonus tối đa 1 dòng. -->
-
-- [ ] Bonus 1 - Tracking MLflow từ xa với DagsHub: ___
-- [ ] Bonus 2 - Điều chỉnh ngưỡng quyết định: ___
-- [ ] Bonus 3 - Báo cáo precision / recall tự động: ___
-- [ ] Bonus 4 - Hoàn trả về phiên bản trước: ___
-- [ ] Bonus 5 - Cảnh báo lệch lạc dữ liệu: ___
+**Nhận xét:** Khi bổ sung 22.361 mẫu ở Bước 3 (tổng 44.722 mẫu), f1_score tăng từ 0.7149 lên 0.7354 và accuracy tăng từ 0.8740 lên 0.8820. Do dữ liệu mới trích xuất từ cùng nguồn nên có cùng phân phối, việc gấp đôi tập huấn luyện giúp mô hình học ranh giới phân loại chính xác hơn. Kết quả này kiểm chứng thành công pipeline MLOps tự động chạy trọn vẹn từ commit dữ liệu đến triển khai.
